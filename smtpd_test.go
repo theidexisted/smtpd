@@ -335,6 +335,40 @@ func TestCmdDATAWithHandler(t *testing.T) {
 	}
 }
 
+type mockLatencyHandler struct {
+	handlerCalled int
+	latency time.Duration
+}
+
+func (m *mockLatencyHandler) handler(err error) func(elapsed time.Duration) {
+	return func(elapsed time.Duration) {
+		m.latency = elapsed
+		m.handlerCalled++
+	}
+}
+
+func TestLatencyWithHandler(t *testing.T) {
+	m0 := mockHandler{}
+
+	m := mockLatencyHandler{}
+	conn := newConn(t, &Server{Handler: m0.handler(nil), ReceiveLatencyHandler: m.handler(nil)})
+
+	cmdCode(t, conn, "EHLO host.example.com", "250")
+	cmdCode(t, conn, "MAIL FROM:<sender@example.com>", "250")
+	cmdCode(t, conn, "RCPT TO:<recipient@example.com>", "250")
+	cmdCode(t, conn, "DATA", "354")
+	cmdCode(t, conn, "Test message.\r\n.", "250")
+	cmdCode(t, conn, "QUIT", "221")
+	conn.Close()
+
+	if m.handlerCalled != 1 {
+		t.Errorf("ReceiveLatencyHandler called %d times, want one call", m.handlerCalled)
+	}
+	if m.latency.Microseconds() == 0 {
+		t.Errorf("ReceiveLatencyHandler latency %d should be a reasonable value", m.handlerCalled)
+	}
+}
+
 func TestCmdDATAWithHandlerError(t *testing.T) {
 	m := mockHandler{}
 	conn := newConn(t, &Server{Handler: m.handler(errors.New("Handler error"))})

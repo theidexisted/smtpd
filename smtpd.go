@@ -33,6 +33,7 @@ var (
 
 // Handler function called upon successful receipt of an email.
 type Handler func(remoteAddr net.Addr, from string, to []string, data []byte) error
+type ReceiveLatencyHandler func(elapsed time.Duration) 
 
 // HandlerRcpt function called on RCPT. Return accept status.
 type HandlerRcpt func(remoteAddr net.Addr, from string, to string) bool
@@ -88,6 +89,7 @@ type Server struct {
 	AuthRequired bool            // Require authentication for every command except AUTH, EHLO, HELO, NOOP, RSET or QUIT as per RFC 4954. Ignored if AuthHandler is not configured.
 	Handler      Handler
 	HandlerRcpt  HandlerRcpt
+	ReceiveLatencyHandler ReceiveLatencyHandler
 	Hostname     string
 	LogRead      LogFunc
 	LogWrite     LogFunc
@@ -316,6 +318,7 @@ func (s *session) serve() {
 	var gotFrom bool
 	var to []string
 	var buffer bytes.Buffer
+	var tmStart = time.Now()
 
 	// Send banner.
 	s.writef("220 %s %s ESMTP Service ready", s.srv.Hostname, s.srv.Appname)
@@ -477,6 +480,9 @@ loop:
 				if err != nil {
 					s.writef("451 4.3.5 Unable to process mail")
 					break
+				}
+				if s.srv.ReceiveLatencyHandler != nil {
+					s.srv.ReceiveLatencyHandler(time.Now().Sub(tmStart))
 				}
 			}
 			s.writef("250 2.0.0 Ok: queued")
