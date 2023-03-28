@@ -1008,6 +1008,48 @@ func TestCmdAUTH(t *testing.T) {
 	conn.Close()
 }
 
+
+/*
+Now work now, need to sync with goroutine that servers
+type mockSessionOpHandler struct {
+	sessionOpenCalled int
+	sessionClosedCalled int
+}
+
+func (m *mockSessionOpHandler) handler(err error) func(newConnection bool ) {
+	return func(newConnection bool ) {
+		if newConnection {
+			m.sessionOpenCalled++
+		} else {
+			m.sessionClosedCalled++
+		}
+	}
+}
+
+
+func TestSessionOpHandler(t *testing.T) {
+	m := mockSessionOpHandler{}
+	server := &Server{SessionOpHandler: m.handler(nil)}
+	conn := newConn(t, server)
+	cmdCode(t, conn, "EHLO host.example.com", "250")
+
+	if m.sessionOpenCalled != 1 {
+		t.Errorf("SessionOpHandler open called %d times, want one call", m.sessionOpenCalled)
+	}
+
+	// By default no authentication handler is configured, so AUTH should return 502 not implemented.
+	cmdCode(t, conn, "AUTH", "502")
+
+	cmdCode(t, conn, "QUIT", "221")
+	conn.Close()
+
+	if m.sessionClosedCalled != 1 {
+		t.Errorf("SessionOpHandler close called %d times, want one call", m.sessionClosedCalled)
+	}
+}
+*/
+
+
 func TestCmdAUTHOptional(t *testing.T) {
 	server := &Server{AuthHandler: authHandler}
 	conn := newConn(t, server)

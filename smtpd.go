@@ -34,6 +34,7 @@ var (
 // Handler function called upon successful receipt of an email.
 type Handler func(remoteAddr net.Addr, from string, to []string, data []byte) error
 type ReceiveLatencyHandler func(elapsed time.Duration) 
+type SessionOpHandler func(newConnection bool ) 
 
 // HandlerRcpt function called on RCPT. Return accept status.
 type HandlerRcpt func(remoteAddr net.Addr, from string, to string) bool
@@ -90,6 +91,7 @@ type Server struct {
 	Handler      Handler
 	HandlerRcpt  HandlerRcpt
 	ReceiveLatencyHandler ReceiveLatencyHandler
+	SessionOpHandler SessionOpHandler
 	Hostname     string
 	LogRead      LogFunc
 	LogWrite     LogFunc
@@ -209,6 +211,10 @@ func (srv *Server) Serve(ln net.Listener) error {
 
 		session := srv.newSession(conn)
 		atomic.AddInt32(&srv.openSessions, 1)
+		if srv.SessionOpHandler != nil {
+			srv.SessionOpHandler(true)
+		}
+
 		go session.serve()
 	}
 }
@@ -311,7 +317,12 @@ func (srv *Server) Shutdown(ctx context.Context) error {
 
 // Function called to handle connection requests.
 func (s *session) serve() {
-	defer atomic.AddInt32(&s.srv.openSessions, -1)
+	defer func() {
+		atomic.AddInt32(&s.srv.openSessions, -1)
+		if s.srv.SessionOpHandler != nil {
+			s.srv.SessionOpHandler(false)
+		}
+	}()
 	defer s.conn.Close()
 
 	var from string
