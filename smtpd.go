@@ -348,6 +348,7 @@ loop:
 			gotFrom = false
 			to = nil
 			buffer.Reset()
+			tmStart = time.Now()
 		case "EHLO":
 			s.remoteName = args
 			s.writef(s.makeEHLOResponse())
@@ -476,13 +477,13 @@ loop:
 
 			// Pass mail on to handler.
 			if s.srv.Handler != nil {
+				if s.srv.ReceiveLatencyHandler != nil {
+					s.srv.ReceiveLatencyHandler(time.Now().Sub(tmStart))
+				}
 				err := s.srv.Handler(s.conn.RemoteAddr(), from, to, buffer.Bytes())
 				if err != nil {
 					s.writef("451 4.3.5 Unable to process mail")
 					break
-				}
-				if s.srv.ReceiveLatencyHandler != nil {
-					s.srv.ReceiveLatencyHandler(time.Now().Sub(tmStart))
 				}
 			}
 			s.writef("250 2.0.0 Ok: queued")
