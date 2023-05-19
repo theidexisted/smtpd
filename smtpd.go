@@ -33,7 +33,7 @@ var (
 
 // Handler function called upon successful receipt of an email.
 type Handler func(remoteAddr net.Addr, from string, to []string, data []byte) error
-type ReceiveLatencyHandler func(elapsed time.Duration) 
+type ReceiveLatencyHandler func(remoteAddr net.Addr,elapsed time.Duration) 
 type SessionOpHandler func(remoteAddr net.Addr, newConnection bool) 
 
 // HandlerRcpt function called on RCPT. Return accept status.
@@ -494,7 +494,7 @@ loop:
 					break
 				}
 				if s.srv.ReceiveLatencyHandler != nil {
-					s.srv.ReceiveLatencyHandler(time.Now().Sub(tmStart))
+					s.srv.ReceiveLatencyHandler(s.conn.RemoteAddr(), time.Now().Sub(tmStart))
 				}
 			}
 			s.writef("250 2.0.0 Ok: queued")
