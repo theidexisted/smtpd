@@ -175,9 +175,9 @@ func (srv *Server) ListenAndServe() error {
 
 	// If TLSListener is enabled, listen for TLS connections only.
 	if srv.TLSConfig != nil && srv.TLSListener {
-		ln, err = tls.Listen("tcp", srv.Addr, srv.TLSConfig)
+		ln, err = tls.Listen("tcp4", srv.Addr, srv.TLSConfig)
 	} else {
-		ln, err = net.Listen("tcp", srv.Addr)
+		ln, err = net.Listen("tcp4", srv.Addr)
 	}
 	if err != nil {
 		return err
