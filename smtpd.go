@@ -358,7 +358,6 @@ loop:
 			from = ""
 			gotFrom = false
 			to = nil
-			buffer.Reset()
 			tmStart = time.Now()
 		case "EHLO":
 			s.remoteName = args
@@ -368,7 +367,7 @@ loop:
 			from = ""
 			gotFrom = false
 			to = nil
-			buffer.Reset()
+			tmStart = time.Now()
 		case "MAIL":
 			if s.srv.TLSConfig != nil && s.srv.TLSRequired && !s.tls {
 				s.writef("530 5.7.0 Must issue a STARTTLS command first")
@@ -504,6 +503,7 @@ loop:
 			gotFrom = false
 			to = nil
 			buffer.Reset()
+			tmStart = time.Now()
 		case "QUIT":
 			s.writef("221 2.0.0 %s %s ESMTP Service closing transmission channel", s.srv.Hostname, s.srv.Appname)
 			break loop
