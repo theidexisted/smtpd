@@ -409,6 +409,7 @@ loop:
 			}
 			to = nil
 			buffer.Reset()
+			tmStart = time.Now()
 		case "RCPT":
 			if s.srv.TLSConfig != nil && s.srv.TLSRequired && !s.tls {
 				s.writef("530 5.7.0 Must issue a STARTTLS command first")
